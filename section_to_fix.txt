@@ -1,0 +1,121 @@
+                        try:
+                            # Check if the SQL query is valid
+                            if not sql_query or len(sql_query.strip()) == 0:
+                                st.error("Generated SQL query is empty. Please try rephrasing your question.")
+                                st.session_state.current_results = pd.DataFrame()
+                                query_time = utils.calculate_query_time(start_time)
+                            else:
+                                # Execute the query differently based on mode
+                                if st.session_state.data_source_mode == "tables":
+                                    # Regular SQL execution for tables mode
+                                    results = database.execute_sql_query(st.session_state.conn, sql_query)
+                                    st.session_state.current_results = results
+                                elif st.session_state.data_source_mode == "reports":
+                                    # For reports mode, we have two options:
+                                    # 1. If we have a temporary view, query it using the generated SQL
+                                    # 2. If not, fall back to the original report query
+                                    if 'report_view_name' in st.session_state and st.session_state.report_view_name:
+                                        # We have a temporary view, so execute the generated SQL against it
+                                        try:
+                                            results = database.execute_sql_query(st.session_state.conn, sql_query)
+                                            st.session_state.current_results = results
+                                        except Exception as e:
+                                            # If querying the view fails, fall back to the original report
+                                            st.warning(f"Error querying view: {str(e)}. Falling back to original report.")
+                                            selected_report = st.session_state.selected_reports[0]
+                                            result = reports.execute_report(st.session_state.conn, selected_report)
+                                            # Handle return values based on length of tuple
+                                            if len(result) == 3:
+                                                results, error_message, _ = result
+                                            else:
+                                                results, error_message = result
+                                            
+                                            if error_message:
+                                                raise Exception(error_message)
+                                            
+                                            st.session_state.current_results = results
+                                    else:
+                                        # No temporary view available, use the original report
+                                        selected_report = st.session_state.selected_reports[0]
+                                        result = reports.execute_report(st.session_state.conn, selected_report)
+                                        # Handle return values based on length of tuple
+                                        if len(result) == 3:
+                                            results, error_message, _ = result
+                                        else:
+                                            results, error_message = result
+                                        
+                                        if error_message:
+                                            raise Exception(error_message)
+                                        
+                                        st.session_state.current_results = results
+                                elif st.session_state.data_source_mode == "web":
+                                    # Web content mode - should not reach here as web content is handled directly
+                                    # by the web_scraper module, but include as a fallback
+                                    st.warning("Direct SQL execution is not supported for web content. Please use the web content interface.")
+                                    st.session_state.current_results = pd.DataFrame()
+                                else:
+                                    # Unexpected mode
+                                    st.error(f"Unsupported data source mode: {st.session_state.data_source_mode}")
+                                    st.session_state.current_results = pd.DataFrame()
+                                        try:
+                                            results = database.execute_sql_query(st.session_state.conn, sql_query)
+                                            st.session_state.current_results = results
+                                        except Exception as e:
+                                            # If querying the view fails, fall back to the original report
+                                            st.warning(f"Error querying view: {str(e)}. Falling back to original report.")
+                                            selected_report = st.session_state.selected_reports[0]
+                                            result = reports.execute_report(st.session_state.conn, selected_report)
+                                            # Handle return values based on length of tuple
+                                            if len(result) == 3:
+                                                results, error_message, _ = result
+                                            else:
+                                                results, error_message = result
+                                            
+                                            if error_message:
+                                                raise Exception(error_message)
+                                            
+                                            st.session_state.current_results = results
+                                    else:
+                                        # No temporary view available, use the original report
+                                        selected_report = st.session_state.selected_reports[0]
+                                        result = reports.execute_report(st.session_state.conn, selected_report)
+                                        # Handle return values based on length of tuple
+                                        if len(result) == 3:
+                                            results, error_message, _ = result
+                                        else:
+                                            results, error_message = result
+                                        
+                                        if error_message:
+                                            raise Exception(error_message)
+                                        
+                                        st.session_state.current_results = results
+                                
+                                query_time = utils.calculate_query_time(start_time)
+                        except Exception as e:
+                            error_msg = str(e)
+                            
+                            # Create more user-friendly error message
+                            error_container = st.error("There was a problem with your query.")
+                            
+                            with st.expander("Error details", expanded=True):
+                                st.error(f"Error: {error_msg}")
+                                
+                                # Provide user-friendly suggestions based on error types
+                                if "relation" in error_msg and "does not exist" in error_msg:
+                                    st.info("💡 It looks like the system tried to query a table that doesn't exist. Try selecting different tables from the sidebar or rephrasing your question to reference only the available tables.")
+                                elif "column" in error_msg and "does not exist" in error_msg:
+                                    st.info("💡 The query referenced a column that doesn't exist in your tables. Try rephrasing your question using column names that match your database schema.")
+                                elif "syntax error" in error_msg:
+                                    st.info("💡 There was a syntax error in the generated SQL query. Please try rephrasing your question to be more specific about what you're looking for.")
+                                elif "permission denied" in error_msg:
+                                    st.info("💡 You don't have permission to access some of the requested data. Try selecting different tables or asking about data you have access to.")
+                                else:
+                                    st.info("💡 Please try rephrasing your question to be clearer or more specific. Focus on the tables and columns you've selected in the sidebar.")
+                            
+                            st.session_state.current_results = pd.DataFrame()
+                            query_time = utils.calculate_query_time(start_time)
+                        
+                        # Add to query history
+                        timestamp = datetime.now().strftime("%H:%M:%S")
+                        if query not in [q[0] for q in st.session_state.query_history]:
+                            st.session_state.query_history.append((query, sql_query, timestamp))

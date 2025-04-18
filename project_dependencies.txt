@@ -1,0 +1,47 @@
+# Core dependencies
+streamlit>=1.32.0
+pandas>=2.0.0
+numpy>=1.24.0
+plotly>=5.18.0
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+
+# Database connections
+psycopg2-binary>=2.9.5
+mysql-connector-python>=8.0.32
+
+# AI model APIs
+openai>=1.10.0
+anthropic>=0.8.0
+langchain>=0.1.0
+langchain-core>=0.1.0
+langchain-community>=0.0.10
+langchain-openai>=0.0.5
+langchain-anthropic>=0.0.5
+langchain-qdrant>=0.0.1
+
+# Vector databases
+chromadb>=0.4.22
+qdrant-client>=1.7.0
+faiss-cpu>=1.7.4
+
+# PDF processing
+pypdf>=3.15.1
+pdf2image>=1.16.3
+pdfplumber>=0.10.1
+
+# Web scraping
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+trafilatura>=1.6.0
+html2text>=2020.1.16
+httpx>=0.25.0
+selenium>=4.15.0
+webdriver-manager>=4.0.0
+
+# NLP & document processing
+tiktoken>=0.5.0
+spacy>=3.7.0
+
+# Optional dependencies
+ollama>=0.1.0

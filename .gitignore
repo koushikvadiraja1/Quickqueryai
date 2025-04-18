@@ -1,0 +1,4 @@
+venv/
+chroma_db/
+qdrant_db/
+uploaded_pdfs/
