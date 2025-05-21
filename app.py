@@ -28,6 +28,84 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Load and encode SVG as base64
+import base64
+import streamlit as st
+import os
+
+# Function to encode image (PNG, SVG, etc.) to base64
+def get_image_base64(path):
+    ext = os.path.splitext(path)[1].lower()
+    mime_type = "image/svg+xml" if ext == ".svg" else "image/png"
+    with open(path, "rb") as image_file:
+        encoded = base64.b64encode(image_file.read()).decode()
+        return f"data:{mime_type};base64,{encoded}"
+
+# Load base64-encoded images
+logo_white = get_image_base64(r'image (8).png')  # for light mode
+logo_dark = get_image_base64(r'image (8).png')   # for dark mode
+
+
+theme = st.get_option("theme.base")
+print("color_theme",theme)
+if theme == "dark":
+    logo_path = logo_white
+if theme == "light":
+    logo_path = logo_white
+else:
+    logo_path = logo_white
+
+#       Show dark logo in light mode svg_base64_white
+# Inject logo to the top-right corner using HTML
+st.markdown(
+    f"""
+    <style>
+    .top-left-logo {{
+        position: absolute;
+        top: 15px;
+        left: 25px;
+        z-index: 9999;
+    }}
+    </style>
+    <div class="top-left-logo">
+        <img src="{logo_path}" alt="Company Logo" height="70">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+logo_white = r'C:\Users\koush\Downloads\image (8).png'
+logo_dark = r'C:\Users\koush\Downloads\image (8).png'
+# st.markdown(
+#     f"""
+#     <style>
+#     .top-right-logo {{
+#         position: absolute;
+#         top: 15px;
+#         right: 25px;
+#         z-index: 9999;
+#     }}
+#     .logo-dark {{
+#         display: none;
+#     }}
+#     .logo-light {{
+#         display: block;
+#     }}
+#     @media (prefers-color-scheme: dark) {{
+#         .logo-light {{
+#             display: none !important;
+#         }}
+#         .logo-dark {{
+#             display: block !important;
+#         }}
+#     }}
+#     </style>
+#     <div class="top-right-logo">
+#         <img class="logo-light" src="data:image/svg+xml;base64,{logo_white}" height="70">
+#         <img class="logo-dark" src="data:image/svg+xml;base64,{logo_dark}" height="70">
+#     </div>
+#     """,
+#     unsafe_allow_html=True
+# )
 # Initialize session state
 if 'connected' not in st.session_state:
     st.session_state.connected = False
@@ -113,7 +191,7 @@ if st.session_state.reset_report_form:
     st.session_state.reset_report_form = False
 
 # Title and icon
-st.title("🔍 QuickQuery AI")
+st.title("")
 
 # Sidebar
 with st.sidebar:
@@ -209,517 +287,539 @@ with st.sidebar:
     st.session_state.data_source_mode = new_mode
     
     st.markdown("---")
+
+    # Set default configuration in session state (if not already set)
+    if "use_multi_agent" not in st.session_state:
+        st.session_state.use_multi_agent = False
+
+    if "use_enhanced_multi_agent" not in st.session_state:
+        st.session_state.use_enhanced_multi_agent = False
+
+    if "model_provider" not in st.session_state:
+        st.session_state.model_provider = "openai"
+
+    if "openai_model" not in st.session_state:
+        st.session_state.openai_model = "gpt-4o"
+
+    if "current_model" not in st.session_state:
+        st.session_state.current_model = st.session_state.openai_model
+
+    if "use_specialized_sql_model" not in st.session_state:
+        st.session_state.use_specialized_sql_model = False
+
+    if "specialized_sql_model" not in st.session_state:
+        st.session_state.specialized_sql_model = "gpt-4o"
     
     # Add Query Processing Settings in a collapsible expander
-    with st.expander("Query Processing Settings", expanded=False):
-        st.caption("Configure AI models and processing modes for query handling")
+    # with st.expander("Query Processing Settings", expanded=False):
+    #     st.caption("Configure AI models and processing modes for query handling")
         
-        # Agent processing options
-        agent_mode = st.radio(
-            "Agent Processing Mode",
-            ["Standard", "Multi-Agent", "Enhanced Multi-Agent"],
-            index=0 if not st.session_state.use_multi_agent else (2 if st.session_state.use_enhanced_multi_agent else 1),
-            help="Choose the processing mode for natural language queries"
-        )
+    #     # Agent processing options
+    #     agent_mode = st.radio(
+    #         "Agent Processing Mode",
+    #         ["Standard", "Multi-Agent", "Enhanced Multi-Agent"],
+    #         index=0 if not st.session_state.use_multi_agent else (2 if st.session_state.use_enhanced_multi_agent else 1),
+    #         help="Choose the processing mode for natural language queries"
+    #     )
         
-        # Set session state based on selection
-        st.session_state.use_multi_agent = agent_mode != "Standard"
-        st.session_state.use_enhanced_multi_agent = agent_mode == "Enhanced Multi-Agent"
+    #     # Set session state based on selection
+    #     st.session_state.use_multi_agent = agent_mode != "Standard"
+    #     st.session_state.use_enhanced_multi_agent = agent_mode == "Enhanced Multi-Agent"
         
-        # Model provider selection
-        model_providers = ["openai", "anthropic", "mistral", "ollama", "custom"]
-        st.session_state.model_provider = st.selectbox(
-            "Model Provider",
-            model_providers,
-            index=model_providers.index(st.session_state.get('model_provider', "openai")),
-            help="Select the AI model provider to use for all agents"
-        )
+    #     # Model provider selection
+    #     model_providers = ["openai", "anthropic", "mistral", "ollama", "custom"]
+    #     st.session_state.model_provider = st.selectbox(
+    #         "Model Provider",
+    #         model_providers,
+    #         index=model_providers.index(st.session_state.get('model_provider', "openai")),
+    #         help="Select the AI model provider to use for all agents"
+    #     )
         
-        # Get available models for the selected provider
-        from model_clients import list_available_models
+    #     # Get available models for the selected provider
+    #     from model_clients import list_available_models
         
-        # Show model selection for the selected provider
-        available_models = list_available_models(st.session_state.model_provider).get(st.session_state.model_provider, [])
+    #     # Show model selection for the selected provider
+    #     available_models = list_available_models(st.session_state.model_provider).get(st.session_state.model_provider, [])
         
-        # Set default model based on provider
-        default_models = {
-            "openai": "gpt-4o",
-            "anthropic": "claude-3-5-sonnet-20241022",
-            "mistral": "mistral-large-latest",
-            "ollama": "llama3",
-            "custom": "custom-model"
-        }
+    #     # Set default model based on provider
+    #     default_models = {
+    #         "openai": "gpt-4o",
+    #         "anthropic": "claude-3-5-sonnet-20241022",
+    #         "mistral": "mistral-large-latest",
+    #         "ollama": "llama3",
+    #         "custom": "custom-model"
+    #     }
         
-        # Get the current default model
-        default_model = st.session_state.get(f"{st.session_state.model_provider}_model", 
-                                            default_models.get(st.session_state.model_provider))
+    #     # Get the current default model
+    #     default_model = st.session_state.get(f"{st.session_state.model_provider}_model", 
+    #                                         default_models.get(st.session_state.model_provider))
         
-        # Set default index
-        try:
-            default_index = available_models.index(default_model)
-        except (ValueError, IndexError):
-            default_index = 0
+    #     # Set default index
+    #     try:
+    #         default_index = available_models.index(default_model)
+    #     except (ValueError, IndexError):
+    #         default_index = 0
             
-        # Add model selection dropdown
-        if available_models:
-            selected_model = st.selectbox(
-                f"{st.session_state.model_provider.title()} Model",
-                available_models,
-                index=default_index,
-                help=f"Select which {st.session_state.model_provider.title()} model to use for generating responses"
-            )
+    #     # Add model selection dropdown
+    #     if available_models:
+    #         selected_model = st.selectbox(
+    #             f"{st.session_state.model_provider.title()} Model",
+    #             available_models,
+    #             index=default_index,
+    #             help=f"Select which {st.session_state.model_provider.title()} model to use for generating responses"
+    #         )
             
-            # Store the selected model in session state with a provider-specific key
-            st.session_state[f"{st.session_state.model_provider}_model"] = selected_model
+    #         # Store the selected model in session state with a provider-specific key
+    #         st.session_state[f"{st.session_state.model_provider}_model"] = selected_model
             
-            # Also store in a generic current_model field for easy access
-            st.session_state.current_model = selected_model
+    #         # Also store in a generic current_model field for easy access
+    #         st.session_state.current_model = selected_model
         
-        # Display specialized SQL model selection when using enhanced multi-agent
-        if st.session_state.use_enhanced_multi_agent:
-            st.session_state.use_specialized_sql_model = st.checkbox(
-                "Use Specialized SQL LLM", 
-                value=st.session_state.get('use_specialized_sql_model', False),
-                help="Enable specialized model for SQL generation"
-            )
+    #     # Display specialized SQL model selection when using enhanced multi-agent
+    #     if st.session_state.use_enhanced_multi_agent:
+    #         st.session_state.use_specialized_sql_model = st.checkbox(
+    #             "Use Specialized SQL LLM", 
+    #             value=st.session_state.get('use_specialized_sql_model', False),
+    #             help="Enable specialized model for SQL generation"
+    #         )
             
-            # Show SQL model selection if specialized model is enabled
-            if st.session_state.use_specialized_sql_model:
-                # Show models based on selected provider
-                if st.session_state.model_provider == "openai":
-                    sql_models = ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"]
-                elif st.session_state.model_provider == "anthropic":
-                    sql_models = ["claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"]
-                elif st.session_state.model_provider == "mistral":
-                    sql_models = ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest"]
-                else:  # ollama
-                    # Get available Ollama models
-                    try:
-                        from model_clients import list_available_models
-                        ollama_models = list_available_models("ollama").get("ollama", ["llama3"])
-                        sql_models = ollama_models
-                    except:
-                        # Default Ollama models if we can't get the list
-                        sql_models = ["llama3", "codellama", "mistral"]
+    #         # Show SQL model selection if specialized model is enabled
+    #         if st.session_state.use_specialized_sql_model:
+    #             # Show models based on selected provider
+    #             if st.session_state.model_provider == "openai":
+    #                 sql_models = ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"]
+    #             elif st.session_state.model_provider == "anthropic":
+    #                 sql_models = ["claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"]
+    #             elif st.session_state.model_provider == "mistral":
+    #                 sql_models = ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest"]
+    #             else:  # ollama
+    #                 # Get available Ollama models
+    #                 try:
+    #                     from model_clients import list_available_models
+    #                     ollama_models = list_available_models("ollama").get("ollama", ["llama3"])
+    #                     sql_models = ollama_models
+    #                 except:
+    #                     # Default Ollama models if we can't get the list
+    #                     sql_models = ["llama3", "codellama", "mistral"]
                 
-                # Default index based on provider
-                default_model = st.session_state.get('specialized_sql_model', "gpt-4o")
-                try:
-                    index = sql_models.index(default_model)
-                except ValueError:
-                    index = 0
+    #             # Default index based on provider
+    #             default_model = st.session_state.get('specialized_sql_model', "gpt-4o")
+    #             try:
+    #                 index = sql_models.index(default_model)
+    #             except ValueError:
+    #                 index = 0
                 
-                st.session_state.specialized_sql_model = st.selectbox(
-                    "SQL Generation Model",
-                    sql_models,
-                    index=index,
-                    help="Select specialized model for SQL generation"
-                )
+    #             st.session_state.specialized_sql_model = st.selectbox(
+    #                 "SQL Generation Model",
+    #                 sql_models,
+    #                 index=index,
+    #                 help="Select specialized model for SQL generation"
+    #             )
                 
-        st.caption(f"""
-        ℹ️ **Agent Processing Info**:
-        - **Multi-Agent**: Uses specialized agents to analyze schema, generate SQL, and analyze data
-        - **Enhanced Multi-Agent**: Adds SQL validation and testing agents for improved reliability
-        - **Model Provider**: {st.session_state.model_provider.capitalize()}
-        """)
+    #     st.caption(f"""
+    #     ℹ️ **Agent Processing Info**:
+    #     - **Multi-Agent**: Uses specialized agents to analyze schema, generate SQL, and analyze data
+    #     - **Enhanced Multi-Agent**: Adds SQL validation and testing agents for improved reliability
+    #     - **Model Provider**: {st.session_state.model_provider.capitalize()}
+    #     """)
     
-    st.markdown("---")
+    # st.markdown("---")
     
-    # Add Model Settings expander
-    with st.expander("Model API Settings", expanded=False):
-        st.caption("Configure API keys for different model providers")
+    # # Add Model Settings expander
+    # with st.expander("Model API Settings", expanded=False):
+    #     st.caption("Configure API keys for different model providers")
         
-        # Load environment variables from .env file
-        utils.load_env_vars()
+    #     # Load environment variables from .env file
+    #     utils.load_env_vars()
         
-        # OpenAI settings
-        st.subheader("OpenAI Settings")
-        # Get existing key if available, otherwise empty string
-        current_openai_key = utils.get_api_key("openai") or ""
-        openai_key_masked = "********" if current_openai_key else ""
+    #     # OpenAI settings
+    #     st.subheader("OpenAI Settings")
+    #     # Get existing key if available, otherwise empty string
+    #     current_openai_key = utils.get_api_key("openai") or ""
+    #     openai_key_masked = "********" if current_openai_key else ""
         
-        # Display if key is already set
-        if current_openai_key:
-            st.success("OpenAI API key is set")
+    #     # Display if key is already set
+    #     if current_openai_key:
+    #         st.success("OpenAI API key is set")
         
-        # OpenAI API Key input
-        openai_key = st.text_input(
-            "OpenAI API Key", 
-            value="",
-            type="password",
-            help="Enter your OpenAI API Key (will be saved to .env file)",
-            placeholder="Enter API key" if not current_openai_key else "Key already saved"
-        )
+    #     # OpenAI API Key input
+    #     openai_key = st.text_input(
+    #         "OpenAI API Key", 
+    #         value="",
+    #         type="password",
+    #         help="Enter your OpenAI API Key (will be saved to .env file)",
+    #         placeholder="Enter API key" if not current_openai_key else "Key already saved"
+    #     )
         
-        # Save/Delete buttons for OpenAI
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Save OpenAI Key", key="save_openai"):
-                if openai_key:
-                    if utils.save_api_key("openai", openai_key):
-                        st.session_state['openai_api_key'] = openai_key
-                        st.success("OpenAI API key saved to .env file")
-                        st.rerun()
-                    else:
-                        st.error("Failed to save OpenAI API key")
-                else:
-                    st.warning("Please enter an API key to save")
+    #     # Save/Delete buttons for OpenAI
+    #     col1, col2 = st.columns(2)
+    #     with col1:
+    #         if st.button("Save OpenAI Key", key="save_openai"):
+    #             if openai_key:
+    #                 if utils.save_api_key("openai", openai_key):
+    #                     st.session_state['openai_api_key'] = openai_key
+    #                     st.success("OpenAI API key saved to .env file")
+    #                     st.rerun()
+    #                 else:
+    #                     st.error("Failed to save OpenAI API key")
+    #             else:
+    #                 st.warning("Please enter an API key to save")
         
-        with col2:
-            if st.button("Delete OpenAI Key", key="delete_openai"):
-                if utils.delete_api_key("openai"):
-                    if 'openai_api_key' in st.session_state:
-                        del st.session_state['openai_api_key']
-                    st.success("OpenAI API key deleted")
-                    st.rerun()
-                else:
-                    st.warning("No OpenAI API key to delete")
+    #     with col2:
+    #         if st.button("Delete OpenAI Key", key="delete_openai"):
+    #             if utils.delete_api_key("openai"):
+    #                 if 'openai_api_key' in st.session_state:
+    #                     del st.session_state['openai_api_key']
+    #                 st.success("OpenAI API key deleted")
+    #                 st.rerun()
+    #             else:
+    #                 st.warning("No OpenAI API key to delete")
         
-        st.markdown("---")
+    #     st.markdown("---")
         
-        # Anthropic settings
-        st.subheader("Anthropic Settings")
-        # Get existing key if available, otherwise empty string
-        current_anthropic_key = utils.get_api_key("anthropic") or ""
-        anthropic_key_masked = "********" if current_anthropic_key else ""
+    #     # Anthropic settings
+    #     st.subheader("Anthropic Settings")
+    #     # Get existing key if available, otherwise empty string
+    #     current_anthropic_key = utils.get_api_key("anthropic") or ""
+    #     anthropic_key_masked = "********" if current_anthropic_key else ""
         
-        # Display if key is already set
-        if current_anthropic_key:
-            st.success("Anthropic API key is set")
+    #     # Display if key is already set
+    #     if current_anthropic_key:
+    #         st.success("Anthropic API key is set")
         
-        # Anthropic API Key input
-        anthropic_key = st.text_input(
-            "Anthropic API Key", 
-            value="",
-            type="password",
-            help="Enter your Anthropic API Key (will be saved to .env file)",
-            placeholder="Enter API key" if not current_anthropic_key else "Key already saved"
-        )
+    #     # Anthropic API Key input
+    #     anthropic_key = st.text_input(
+    #         "Anthropic API Key", 
+    #         value="",
+    #         type="password",
+    #         help="Enter your Anthropic API Key (will be saved to .env file)",
+    #         placeholder="Enter API key" if not current_anthropic_key else "Key already saved"
+    #     )
         
-        # Save/Delete buttons for Anthropic
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Save Anthropic Key", key="save_anthropic"):
-                if anthropic_key:
-                    if utils.save_api_key("anthropic", anthropic_key):
-                        st.session_state['anthropic_api_key'] = anthropic_key
-                        st.success("Anthropic API key saved to .env file")
-                        st.rerun()
-                    else:
-                        st.error("Failed to save Anthropic API key")
-                else:
-                    st.warning("Please enter an API key to save")
+    #     # Save/Delete buttons for Anthropic
+    #     col1, col2 = st.columns(2)
+    #     with col1:
+    #         if st.button("Save Anthropic Key", key="save_anthropic"):
+    #             if anthropic_key:
+    #                 if utils.save_api_key("anthropic", anthropic_key):
+    #                     st.session_state['anthropic_api_key'] = anthropic_key
+    #                     st.success("Anthropic API key saved to .env file")
+    #                     st.rerun()
+    #                 else:
+    #                     st.error("Failed to save Anthropic API key")
+    #             else:
+    #                 st.warning("Please enter an API key to save")
         
-        with col2:
-            if st.button("Delete Anthropic Key", key="delete_anthropic"):
-                if utils.delete_api_key("anthropic"):
-                    if 'anthropic_api_key' in st.session_state:
-                        del st.session_state['anthropic_api_key']
-                    st.success("Anthropic API key deleted")
-                    st.rerun()
-                else:
-                    st.warning("No Anthropic API key to delete")
+    #     with col2:
+    #         if st.button("Delete Anthropic Key", key="delete_anthropic"):
+    #             if utils.delete_api_key("anthropic"):
+    #                 if 'anthropic_api_key' in st.session_state:
+    #                     del st.session_state['anthropic_api_key']
+    #                 st.success("Anthropic API key deleted")
+    #                 st.rerun()
+    #             else:
+    #                 st.warning("No Anthropic API key to delete")
         
-        st.markdown("---")
+    #     st.markdown("---")
         
-        # Mistral settings
-        st.subheader("Mistral Settings")
-        # Get existing key if available, otherwise empty string
-        current_mistral_key = utils.get_api_key("mistral") or ""
-        mistral_key_masked = "********" if current_mistral_key else ""
+    #     # Mistral settings
+    #     st.subheader("Mistral Settings")
+    #     # Get existing key if available, otherwise empty string
+    #     current_mistral_key = utils.get_api_key("mistral") or ""
+    #     mistral_key_masked = "********" if current_mistral_key else ""
         
-        # Display if key is already set
-        if current_mistral_key:
-            st.success("Mistral API key is set")
+    #     # Display if key is already set
+    #     if current_mistral_key:
+    #         st.success("Mistral API key is set")
         
-        # Mistral API Key input
-        mistral_key = st.text_input(
-            "Mistral API Key", 
-            value="",
-            type="password",
-            help="Enter your Mistral API Key (will be saved to .env file)",
-            placeholder="Enter API key" if not current_mistral_key else "Key already saved"
-        )
+    #     # Mistral API Key input
+    #     mistral_key = st.text_input(
+    #         "Mistral API Key", 
+    #         value="",
+    #         type="password",
+    #         help="Enter your Mistral API Key (will be saved to .env file)",
+    #         placeholder="Enter API key" if not current_mistral_key else "Key already saved"
+    #     )
         
-        # Save/Delete buttons for Mistral
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Save Mistral Key", key="save_mistral"):
-                if mistral_key:
-                    if utils.save_api_key("mistral", mistral_key):
-                        st.session_state['mistral_api_key'] = mistral_key
-                        st.success("Mistral API key saved to .env file")
-                        st.rerun()
-                    else:
-                        st.error("Failed to save Mistral API key")
-                else:
-                    st.warning("Please enter an API key to save")
+    #     # Save/Delete buttons for Mistral
+    #     col1, col2 = st.columns(2)
+    #     with col1:
+    #         if st.button("Save Mistral Key", key="save_mistral"):
+    #             if mistral_key:
+    #                 if utils.save_api_key("mistral", mistral_key):
+    #                     st.session_state['mistral_api_key'] = mistral_key
+    #                     st.success("Mistral API key saved to .env file")
+    #                     st.rerun()
+    #                 else:
+    #                     st.error("Failed to save Mistral API key")
+    #             else:
+    #                 st.warning("Please enter an API key to save")
         
-        with col2:
-            if st.button("Delete Mistral Key", key="delete_mistral"):
-                if utils.delete_api_key("mistral"):
-                    if 'mistral_api_key' in st.session_state:
-                        del st.session_state['mistral_api_key']
-                    st.success("Mistral API key deleted")
-                    st.rerun()
-                else:
-                    st.warning("No Mistral API key to delete")
+    #     with col2:
+    #         if st.button("Delete Mistral Key", key="delete_mistral"):
+    #             if utils.delete_api_key("mistral"):
+    #                 if 'mistral_api_key' in st.session_state:
+    #                     del st.session_state['mistral_api_key']
+    #                 st.success("Mistral API key deleted")
+    #                 st.rerun()
+    #             else:
+    #                 st.warning("No Mistral API key to delete")
         
-        st.markdown("---")
+    #     st.markdown("---")
         
-        # Ollama settings
-        st.subheader("Ollama Settings")
-        # Get existing host if available, otherwise default
-        current_ollama_host = utils.get_api_key("ollama_host") or "http://localhost:11434"
+    #     # Ollama settings
+    #     st.subheader("Ollama Settings")
+    #     # Get existing host if available, otherwise default
+    #     current_ollama_host = utils.get_api_key("ollama_host") or "http://localhost:11434"
         
-        # Display if host is already set
-        st.info(f"Ollama host is set to: {current_ollama_host}")
+    #     # Display if host is already set
+    #     st.info(f"Ollama host is set to: {current_ollama_host}")
         
-        # Ollama host input
-        ollama_host = st.text_input(
-            "Ollama Host URL", 
-            value="",
-            help="Enter your Ollama host URL (will be saved to .env file)",
-            placeholder="Enter host URL (e.g., http://localhost:11434)" if current_ollama_host == "http://localhost:11434" else "Host already saved"
-        )
+    #     # Ollama host input
+    #     ollama_host = st.text_input(
+    #         "Ollama Host URL", 
+    #         value="",
+    #         help="Enter your Ollama host URL (will be saved to .env file)",
+    #         placeholder="Enter host URL (e.g., http://localhost:11434)" if current_ollama_host == "http://localhost:11434" else "Host already saved"
+    #     )
         
-        # Save/Reset buttons for Ollama host
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Save Ollama Host", key="save_ollama_host"):
-                if ollama_host:
-                    if utils.save_api_key("ollama_host", ollama_host):
-                        st.session_state['ollama_host'] = ollama_host
-                        # Update environment variable immediately
-                        os.environ["OLLAMA_HOST"] = ollama_host
-                        st.success("Ollama host saved to .env file")
-                        st.rerun()
-                    else:
-                        st.error("Failed to save Ollama host")
-                else:
-                    st.warning("Please enter a host URL to save")
+    #     # Save/Reset buttons for Ollama host
+    #     col1, col2 = st.columns(2)
+    #     with col1:
+    #         if st.button("Save Ollama Host", key="save_ollama_host"):
+    #             if ollama_host:
+    #                 if utils.save_api_key("ollama_host", ollama_host):
+    #                     st.session_state['ollama_host'] = ollama_host
+    #                     # Update environment variable immediately
+    #                     os.environ["OLLAMA_HOST"] = ollama_host
+    #                     st.success("Ollama host saved to .env file")
+    #                     st.rerun()
+    #                 else:
+    #                     st.error("Failed to save Ollama host")
+    #             else:
+    #                 st.warning("Please enter a host URL to save")
         
-        with col2:
-            if st.button("Reset to Default", key="reset_ollama_host"):
-                default_host = "http://localhost:11434"
-                if utils.save_api_key("ollama_host", default_host):
-                    st.session_state['ollama_host'] = default_host
-                    # Update environment variable immediately
-                    os.environ["OLLAMA_HOST"] = default_host
-                    st.success("Ollama host reset to default")
-                    st.rerun()
-                else:
-                    st.warning("Failed to reset Ollama host")
+    #     with col2:
+    #         if st.button("Reset to Default", key="reset_ollama_host"):
+    #             default_host = "http://localhost:11434"
+    #             if utils.save_api_key("ollama_host", default_host):
+    #                 st.session_state['ollama_host'] = default_host
+    #                 # Update environment variable immediately
+    #                 os.environ["OLLAMA_HOST"] = default_host
+    #                 st.success("Ollama host reset to default")
+    #                 st.rerun()
+    #             else:
+    #                 st.warning("Failed to reset Ollama host")
         
-        # Display available Ollama models if we can connect
-        try:
-            from model_clients import list_available_models
-            available_models = list_available_models("ollama").get("ollama", [])
+    #     # Display available Ollama models if we can connect
+    #     try:
+    #         from model_clients import list_available_models
+    #         available_models = list_available_models("ollama").get("ollama", [])
             
-            if available_models:
-                st.success(f"Connected to Ollama! Available models: {', '.join(available_models)}")
-            else:
-                st.warning("Connected to Ollama, but no models are available. Please pull at least one model.")
-        except Exception as e:
-            st.error(f"Could not connect to Ollama. Make sure the Ollama service is running at {current_ollama_host}. Error: {str(e)}")
-            st.info("To use Ollama, you need to install and run the Ollama service separately. Visit https://ollama.com for installation instructions.")
+    #         if available_models:
+    #             st.success(f"Connected to Ollama! Available models: {', '.join(available_models)}")
+    #         else:
+    #             st.warning("Connected to Ollama, but no models are available. Please pull at least one model.")
+    #     except Exception as e:
+    #         st.error(f"Could not connect to Ollama. Make sure the Ollama service is running at {current_ollama_host}. Error: {str(e)}")
+    #         st.info("To use Ollama, you need to install and run the Ollama service separately. Visit https://ollama.com for installation instructions.")
             
-        st.markdown("---")
+    #     st.markdown("---")
         
-        # Web Scraping Tools API Settings
-        st.subheader("Web Scraping API Settings")
-        st.caption("Configure API keys for advanced web scraping tools")
+    #     # Web Scraping Tools API Settings
+    #     st.subheader("Web Scraping API Settings")
+    #     st.caption("Configure API keys for advanced web scraping tools")
         
-        # ScrapingBee settings
-        st.write("**ScrapingBee**")
-        st.caption("Premium web scraping service that handles JavaScript, CAPTCHAs, and IP rotation")
+    #     # ScrapingBee settings
+    #     st.write("**ScrapingBee**")
+    #     st.caption("Premium web scraping service that handles JavaScript, CAPTCHAs, and IP rotation")
         
-        # Get existing key if available
-        current_scrapingbee_key = utils.get_api_key("scrapingbee") or ""
-        scrapingbee_key_masked = "********" if current_scrapingbee_key else ""
+    #     # Get existing key if available
+    #     current_scrapingbee_key = utils.get_api_key("scrapingbee") or ""
+    #     scrapingbee_key_masked = "********" if current_scrapingbee_key else ""
         
-        # Display if key is already set
-        if current_scrapingbee_key:
-            st.success("ScrapingBee API key is set")
+    #     # Display if key is already set
+    #     if current_scrapingbee_key:
+    #         st.success("ScrapingBee API key is set")
         
-        # ScrapingBee API Key input
-        scrapingbee_key = st.text_input(
-            "ScrapingBee API Key", 
-            value="",
-            type="password",
-            help="Enter your ScrapingBee API Key for premium web scraping capabilities",
-            placeholder="Enter API key" if not current_scrapingbee_key else "Key already saved",
-            key="scrapingbee_api_key_input"
-        )
+    #     # ScrapingBee API Key input
+    #     scrapingbee_key = st.text_input(
+    #         "ScrapingBee API Key", 
+    #         value="",
+    #         type="password",
+    #         help="Enter your ScrapingBee API Key for premium web scraping capabilities",
+    #         placeholder="Enter API key" if not current_scrapingbee_key else "Key already saved",
+    #         key="scrapingbee_api_key_input"
+    #     )
         
-        # Save/Delete buttons for ScrapingBee
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Save ScrapingBee Key", key="save_scrapingbee"):
-                if scrapingbee_key:
-                    if utils.save_api_key("scrapingbee", scrapingbee_key):
-                        st.session_state['scrapingbee_api_key'] = scrapingbee_key
-                        os.environ["SCRAPINGBEE_API_KEY"] = scrapingbee_key
-                        st.success("ScrapingBee API key saved to .env file")
-                        st.rerun()
-                    else:
-                        st.error("Failed to save ScrapingBee API key")
+    #     # Save/Delete buttons for ScrapingBee
+    #     col1, col2 = st.columns(2)
+    #     with col1:
+    #         if st.button("Save ScrapingBee Key", key="save_scrapingbee"):
+    #             if scrapingbee_key:
+    #                 if utils.save_api_key("scrapingbee", scrapingbee_key):
+    #                     st.session_state['scrapingbee_api_key'] = scrapingbee_key
+    #                     os.environ["SCRAPINGBEE_API_KEY"] = scrapingbee_key
+    #                     st.success("ScrapingBee API key saved to .env file")
+    #                     st.rerun()
+    #                 else:
+    #                     st.error("Failed to save ScrapingBee API key")
         
-        st.markdown("---")
+    #     st.markdown("---")
         
-        # Apify settings
-        st.write("**Apify Website Content Crawler**")
-        st.caption("Advanced website crawler for extracting content from entire websites at scale")
+    #     # Apify settings
+    #     st.write("**Apify Website Content Crawler**")
+    #     st.caption("Advanced website crawler for extracting content from entire websites at scale")
         
-        # Get existing key if available
-        current_apify_key = utils.get_api_key("apify") or ""
-        apify_key_masked = "********" if current_apify_key else ""
+    #     # Get existing key if available
+    #     current_apify_key = utils.get_api_key("apify") or ""
+    #     apify_key_masked = "********" if current_apify_key else ""
         
-        # Display if key is already set
-        if current_apify_key:
-            st.success("Apify API key is set")
+    #     # Display if key is already set
+    #     if current_apify_key:
+    #         st.success("Apify API key is set")
         
-        # Apify API Key input
-        apify_key = st.text_input(
-            "Apify API Key", 
-            value="",
-            type="password",
-            help="Enter your Apify API Key for advanced website crawling",
-            placeholder="Enter API key" if not current_apify_key else "Key already saved",
-            key="apify_api_key_input"
-        )
+    #     # Apify API Key input
+    #     apify_key = st.text_input(
+    #         "Apify API Key", 
+    #         value="",
+    #         type="password",
+    #         help="Enter your Apify API Key for advanced website crawling",
+    #         placeholder="Enter API key" if not current_apify_key else "Key already saved",
+    #         key="apify_api_key_input"
+    #     )
         
-        # Save/Delete buttons for Apify
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Save Apify Key", key="save_apify"):
-                if apify_key:
-                    if utils.save_api_key("apify", apify_key):
-                        st.session_state['apify_api_key'] = apify_key
-                        os.environ["APIFY_API_KEY"] = apify_key
-                        st.success("Apify API key saved to .env file")
-                        st.rerun()
-                    else:
-                        st.error("Failed to save Apify API key")
-                else:
-                    st.warning("Please enter an API key to save")
+    #     # Save/Delete buttons for Apify
+    #     col1, col2 = st.columns(2)
+    #     with col1:
+    #         if st.button("Save Apify Key", key="save_apify"):
+    #             if apify_key:
+    #                 if utils.save_api_key("apify", apify_key):
+    #                     st.session_state['apify_api_key'] = apify_key
+    #                     os.environ["APIFY_API_KEY"] = apify_key
+    #                     st.success("Apify API key saved to .env file")
+    #                     st.rerun()
+    #                 else:
+    #                     st.error("Failed to save Apify API key")
+    #             else:
+    #                 st.warning("Please enter an API key to save")
         
-        with col2:
-            if st.button("Delete Apify Key", key="delete_apify"):
-                if utils.delete_api_key("apify"):
-                    if 'apify_api_key' in st.session_state:
-                        del st.session_state['apify_api_key']
-                    if "APIFY_API_KEY" in os.environ:
-                        del os.environ["APIFY_API_KEY"]
-                    st.success("Apify API key deleted")
-                    st.rerun()
-                else:
-                    st.error("Failed to delete Apify API key")
+    #     with col2:
+    #         if st.button("Delete Apify Key", key="delete_apify"):
+    #             if utils.delete_api_key("apify"):
+    #                 if 'apify_api_key' in st.session_state:
+    #                     del st.session_state['apify_api_key']
+    #                 if "APIFY_API_KEY" in os.environ:
+    #                     del os.environ["APIFY_API_KEY"]
+    #                 st.success("Apify API key deleted")
+    #                 st.rerun()
+    #             else:
+    #                 st.error("Failed to delete Apify API key")
         
-        # Add ScrapingBee delete button
-        with col2:
-            if st.button("Delete ScrapingBee Key", key="delete_scrapingbee"):
-                if utils.delete_api_key("scrapingbee"):
-                    if 'scrapingbee_api_key' in st.session_state:
-                        del st.session_state['scrapingbee_api_key']
-                    if 'SCRAPINGBEE_API_KEY' in os.environ:
-                        del os.environ['SCRAPINGBEE_API_KEY']
-                    st.success("ScrapingBee API key deleted")
-                    st.rerun()
-                else:
-                    st.warning("No ScrapingBee API key to delete")
+    #     # Add ScrapingBee delete button
+    #     with col2:
+    #         if st.button("Delete ScrapingBee Key", key="delete_scrapingbee"):
+    #             if utils.delete_api_key("scrapingbee"):
+    #                 if 'scrapingbee_api_key' in st.session_state:
+    #                     del st.session_state['scrapingbee_api_key']
+    #                 if 'SCRAPINGBEE_API_KEY' in os.environ:
+    #                     del os.environ['SCRAPINGBEE_API_KEY']
+    #                 st.success("ScrapingBee API key deleted")
+    #                 st.rerun()
+    #             else:
+    #                 st.warning("No ScrapingBee API key to delete")
         
-        st.markdown("---")
+    #     st.markdown("---")
         
-        # Custom LLM API settings
-        st.subheader("Custom LLM API Settings")
-        st.caption("Connect to a custom LLM API endpoint (OpenAI or Anthropic compatible)")
+    #     # Custom LLM API settings
+    #     st.subheader("Custom LLM API Settings")
+    #     st.caption("Connect to a custom LLM API endpoint (OpenAI or Anthropic compatible)")
         
-        # Get existing values if available
-        current_custom_endpoint = utils.get_api_key("custom_api_endpoint") or ""
-        current_custom_key = utils.get_api_key("custom_api_key") or ""
+    #     # Get existing values if available
+    #     current_custom_endpoint = utils.get_api_key("custom_api_endpoint") or ""
+    #     current_custom_key = utils.get_api_key("custom_api_key") or ""
         
-        # Display if values are already set
-        if current_custom_endpoint:
-            st.success(f"Custom LLM API endpoint is set: {current_custom_endpoint}")
+    #     # Display if values are already set
+    #     if current_custom_endpoint:
+    #         st.success(f"Custom LLM API endpoint is set: {current_custom_endpoint}")
         
-        if current_custom_key:
-            st.success("Custom LLM API key is set")
+    #     if current_custom_key:
+    #         st.success("Custom LLM API key is set")
         
-        # Custom LLM API endpoint input
-        custom_endpoint = st.text_input(
-            "Custom LLM API Endpoint", 
-            value="",
-            help="Enter your custom LLM API endpoint URL (will be saved to .env file)",
-            placeholder="Enter API URL (e.g., https://api.yourllm.com/v1/chat/completions)" if not current_custom_endpoint else "Endpoint already saved"
-        )
+    #     # Custom LLM API endpoint input
+    #     custom_endpoint = st.text_input(
+    #         "Custom LLM API Endpoint", 
+    #         value="",
+    #         help="Enter your custom LLM API endpoint URL (will be saved to .env file)",
+    #         placeholder="Enter API URL (e.g., https://api.yourllm.com/v1/chat/completions)" if not current_custom_endpoint else "Endpoint already saved"
+    #     )
         
-        # Custom LLM API Key input (optional)
-        custom_api_key = st.text_input(
-            "Custom LLM API Key (Optional)", 
-            value="",
-            type="password",
-            help="Enter your custom LLM API Key if required (will be saved to .env file)",
-            placeholder="Enter API key if needed" if not current_custom_key else "Key already saved"
-        )
+    #     # Custom LLM API Key input (optional)
+    #     custom_api_key = st.text_input(
+    #         "Custom LLM API Key (Optional)", 
+    #         value="",
+    #         type="password",
+    #         help="Enter your custom LLM API Key if required (will be saved to .env file)",
+    #         placeholder="Enter API key if needed" if not current_custom_key else "Key already saved"
+    #     )
         
-        # Model name input
-        custom_model_name = st.text_input(
-            "Custom Model Name",
-            value=st.session_state.get("custom_model_name", "custom-model"),
-            help="Specify the model name to use with this custom endpoint"
-        )
+    #     # Model name input
+    #     custom_model_name = st.text_input(
+    #         "Custom Model Name",
+    #         value=st.session_state.get("custom_model_name", "custom-model"),
+    #         help="Specify the model name to use with this custom endpoint"
+    #     )
         
-        if custom_model_name:
-            st.session_state["custom_model_name"] = custom_model_name
+    #     if custom_model_name:
+    #         st.session_state["custom_model_name"] = custom_model_name
         
-        # Save/Delete buttons for custom endpoint
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Save Custom API Settings", key="save_custom_api"):
-                saved_successfully = True
+    #     # Save/Delete buttons for custom endpoint
+    #     col1, col2 = st.columns(2)
+    #     with col1:
+    #         if st.button("Save Custom API Settings", key="save_custom_api"):
+    #             saved_successfully = True
                 
-                # Save endpoint
-                if custom_endpoint:
-                    if not utils.save_api_key("custom_api_endpoint", custom_endpoint):
-                        st.error("Failed to save custom endpoint")
-                        saved_successfully = False
-                    else:
-                        st.session_state["custom_api_endpoint"] = custom_endpoint
+    #             # Save endpoint
+    #             if custom_endpoint:
+    #                 if not utils.save_api_key("custom_api_endpoint", custom_endpoint):
+    #                     st.error("Failed to save custom endpoint")
+    #                     saved_successfully = False
+    #                 else:
+    #                     st.session_state["custom_api_endpoint"] = custom_endpoint
                 
-                # Save API key (if provided)
-                if custom_api_key:
-                    if not utils.save_api_key("custom_api_key", custom_api_key):
-                        st.error("Failed to save custom API key")
-                        saved_successfully = False
-                    else:
-                        st.session_state["custom_api_key"] = custom_api_key
+    #             # Save API key (if provided)
+    #             if custom_api_key:
+    #                 if not utils.save_api_key("custom_api_key", custom_api_key):
+    #                     st.error("Failed to save custom API key")
+    #                     saved_successfully = False
+    #                 else:
+    #                     st.session_state["custom_api_key"] = custom_api_key
                 
-                if saved_successfully and (custom_endpoint or custom_api_key):
-                    st.success("Custom LLM API settings saved")
-                    st.rerun()
-                elif not custom_endpoint and not custom_api_key:
-                    st.warning("Please enter at least the API endpoint to save")
+    #             if saved_successfully and (custom_endpoint or custom_api_key):
+    #                 st.success("Custom LLM API settings saved")
+    #                 st.rerun()
+    #             elif not custom_endpoint and not custom_api_key:
+    #                 st.warning("Please enter at least the API endpoint to save")
         
-        with col2:
-            if st.button("Delete Custom API Settings", key="delete_custom_api"):
-                # Delete both endpoint and key
-                endpoint_deleted = utils.delete_api_key("custom_api_endpoint")
-                key_deleted = utils.delete_api_key("custom_api_key")
+    #     with col2:
+    #         if st.button("Delete Custom API Settings", key="delete_custom_api"):
+    #             # Delete both endpoint and key
+    #             endpoint_deleted = utils.delete_api_key("custom_api_endpoint")
+    #             key_deleted = utils.delete_api_key("custom_api_key")
                 
-                if endpoint_deleted or key_deleted:
-                    # Clean up session state
-                    if "custom_api_endpoint" in st.session_state:
-                        del st.session_state["custom_api_endpoint"]
-                    if "custom_api_key" in st.session_state:
-                        del st.session_state["custom_api_key"]
+    #             if endpoint_deleted or key_deleted:
+    #                 # Clean up session state
+    #                 if "custom_api_endpoint" in st.session_state:
+    #                     del st.session_state["custom_api_endpoint"]
+    #                 if "custom_api_key" in st.session_state:
+    #                     del st.session_state["custom_api_key"]
                     
-                    st.success("Custom LLM API settings deleted")
-                    st.rerun()
-                else:
-                    st.warning("No custom API settings to delete")
+    #                 st.success("Custom LLM API settings deleted")
+    #                 st.rerun()
+    #             else:
+    #                 st.warning("No custom API settings to delete")
         
-        st.caption("API keys are saved to .env file for persistence between sessions")
+    #     st.caption("API keys are saved to .env file for persistence between sessions")
     
     # Initialize connection_type with a default value
     connection_type = "Use environment variables"
@@ -801,7 +901,7 @@ with st.sidebar:
             st.session_state.selected_tables = []
             st.rerun()
     else:
-        st.warning("Not connected to database")
+        # st.warning("Not connected to database")
         if st.button("Connect"):
             with st.spinner("Connecting to database..."):
                 if connection_type == "Use environment variables":
@@ -3547,7 +3647,7 @@ fig = create_visualization(df)
                         st.rerun()
                         
 else:
-    st.info("Please connect to your database using the sidebar to start exploring your data")
+    st.info("Choose your source from the Left Panel to start exploring your Data.")
 
 # Footer
 st.markdown("---")
