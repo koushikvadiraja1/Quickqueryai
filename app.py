@@ -1990,7 +1990,7 @@ if st.session_state.data_source_mode in ["pdf", "web", "image"]:
                     selected_doc_names.append(st.session_state.pdf_collections[cid].get("filename", "Unknown"))
             
             # Display selected documents
-            st.subheader(f"Using {len(selected_doc_names)} selected document(s)")
+            # st.subheader(f"Using {len(selected_doc_names)} selected document(s)")
             st.write(f"Documents: {', '.join(selected_doc_names)}")
             
             # User query input
